@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  rust-app:
+    build: .
+    volumes:
+      - .:/usr/src/myapp
+    ports:
+      - "8080:8080"
+    command: ["cargo", "run"]
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: rust-db
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    ports:
+      - "3306:3306"

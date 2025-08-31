@@ -1,0 +1,16 @@
+[package]
+name = "rust-app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { version = "0.8.4", features = ["http2", "macros", "ws", "json"] }
+dotenvy = "0.15.7"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.143"
+sqlx = { version = "0.8.6", features = ["runtime-tokio-native-tls", "macros", "mysql"] }
+tokio = { version = "1.47.1", features = ["full"] }
+uuid = { version = "1.18.0", features = ["v4"] }
+
+[package.metadata.sqlx]
+offline = true
