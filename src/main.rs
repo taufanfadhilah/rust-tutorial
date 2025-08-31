@@ -1,11 +1,15 @@
+mod controllers;
+mod dtos;
 mod helpers;
-mod user;
+mod models;
+mod services;
 
 use axum::{routing::get, Router};
-use axum::extract::Query;
+use controllers::user_controller::{
+    user_create, user_delete, user_get, user_get_by_id, user_update,
+};
 use sqlx::mysql::MySqlPoolOptions;
 use tokio::net::TcpListener;
-use user::{user_create, user_get, user_get_by_id, user_update, user_delete};
 
 #[tokio::main]
 async fn main() {
@@ -22,7 +26,10 @@ async fn main() {
 
     let app = Router::new()
         .route("/users", get(user_get).post(user_create))
-        .route("/users/{id}", get(user_get_by_id).put(user_update).delete(user_delete))
+        .route(
+            "/users/{id}",
+            get(user_get_by_id).put(user_update).delete(user_delete),
+        )
         .with_state(pool);
 
     let listener = TcpListener::bind(server_address)
