@@ -1,6 +1,6 @@
-use crate::helpers::response::create_response;
+use crate::helpers::response::{create_pagination_metadata, create_response, Pagination};
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     Json,
 };
@@ -20,20 +20,40 @@ pub struct CreateUserReq {
 
 pub async fn user_get(
     State(pool): State<MySqlPool>,
+    query: Query<Pagination>,
 ) -> Result<(StatusCode, String), (StatusCode, String)> {
-    let users = sqlx::query_as!(User, "SELECT id, name FROM users")
-        .fetch_all(&pool)
+    let offset = (query.page.unwrap_or(1) - 1) * query.per_page.unwrap_or(10);
+
+    let users = sqlx::query_as!(
+        User,
+        "SELECT id, name FROM users LIMIT ? OFFSET ?",
+        query.per_page.unwrap_or(10) as i64,
+        offset as i64
+    )
+    .fetch_all(&pool)
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            create_response(false, "Failed to get all users", e.to_string()),
+        )
+    })?;
+
+    let total: (i64,) = sqlx::query_as("SELECT COUNT(id) FROM users")
+        .fetch_one(&pool)
         .await
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                create_response(false, "Failed to get all users", e.to_string()),
+                create_response(false, "Failed to count users", e.to_string()),
             )
         })?;
 
+    let metadata = create_pagination_metadata(users, total.0 as usize, query);
+
     Ok((
         StatusCode::OK,
-        create_response(true, "get all users successfully", users),
+        create_response(true, "get all users successfully", metadata),
     ))
 }
 
